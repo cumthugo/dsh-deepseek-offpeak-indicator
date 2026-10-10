@@ -46,48 +46,59 @@
 
 前置：一个可用的 DSH profile（桌面版或 `dsh web` 均可），并且已能正常启动会话。
 
+推荐**在插件页里填个 GitHub 地址**就装好，不用克隆、不用敲命令：
+
+1. 点开侧边栏的**「插件」**页（面板列表里的插件图标）。
+2. 点**「添加插件」**。
+3. 在输入框里填入下面这个地址（它接受包名、GitHub 仓库地址或本地目录路径）：
+
+   ```
+   https://github.com/cumthugo/dsh-deepseek-offpeak-indicator
+   ```
+
+   简写 `github:cumthugo/dsh-deepseek-offpeak-indicator` 同样可以；想锁定版本就带上分支或提交号，
+   例如 `github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`。
+
+4. 装完即生效：结果是 `application: applied`，当前页面无需刷新；若提示 `restart-required`，
+   重启 Harness 即可。
+
+安装器会自动把它写进 profile 的 `dsh.profile.bundles` 与依赖，并按仓库自带的
+`cordis.patch.yml` 插入 Loader 条目——你不需要手工改任何配置文件。
+
+### 让 Agent 安装（等价做法）
+
+```
+plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
+```
+
+安装前安装器会对仓库做一次 `git ls-remote` 连通性检查（公开仓库无需凭据）。
+
+### 本地目录安装（要改代码时用）
+
 1. 克隆到本地：
 
    ```bash
    git clone https://github.com/cumthugo/dsh-deepseek-offpeak-indicator.git
    ```
 
-2. 把**克隆下来的绝对路径**装进 profile。在 DSH 会话里让 Agent 执行：
+2. 把克隆下来的**绝对路径**填进同一个输入框（或交给 Agent）：
 
    ```
    plugin_manager  action=install_bundle  target=/绝对路径/dsh-deepseek-offpeak-indicator
    ```
 
-   或在 GUI 的**插件**页面里选择"从本地目录安装"。安装器会自动：
-   在 profile 的 `package.json` 里写入 `link:` 依赖、把它加入 `dsh.profile.bundles`，
-   并按本仓库自带的 `cordis.patch.yml` 插入 Loader 条目。
+   profile 里会记成 `link:` 依赖，改完源文件重装一次即可生效。
 
-3. 结果是 `application: applied` 就立刻生效（当前页面无需刷新）；若返回
-   `restart-required`，重启 Harness 即可。
-
-### 直接从 GitHub 安装（免克隆）
-
-让安装器直接从仓库拉取也可以，profile 里会记成 git 依赖：
-
-```
-plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
-```
-
-安装前安装器会对 GitHub 仓库做一次 `git ls-remote` 连通性检查（公开仓库无需凭据）。
-想锁定版本就写死提交号或分支：`github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`。
-注意 git 安装下来的是一份快照副本，**更新同样要走 remove → install**；要可复现就固定 commit sha。
-
-**更新**：对同一个本地路径**重复安装不会生效**——依赖没变化，安装器会报
-`ambiguous-install`。`git pull` 之后要走"先移除、再安装"这一趟：
+**更新**：重复安装**同一个安装源不会生效**——依赖串没变化，安装器会报 `ambiguous-install`。
+正确做法是先在插件页卸载，再用同一个地址重装一次：
 
 ```
 plugin_manager  action=remove_bundle  target=dsh-deepseek-offpeak-indicator
-plugin_manager  action=install_bundle target=/绝对路径/dsh-deepseek-offpeak-indicator
+plugin_manager  action=install_bundle target=github:cumthugo/dsh-deepseek-offpeak-indicator
 ```
 
-宿主会重新读取 bundle 并通知页面热更新，无需重启。GUI 插件页里的"卸载 → 安装"同理。
-（只想让改动生效而不卸载的话，也可以改一下 `package.json` 的 `version` 让依赖串变化，但不如
-上面这条可靠。）
+宿主会重新读取 bundle 并推给已打开的页面，无需重启。（本地目录装法同理，把第二行的 target
+换成克隆路径即可；换一个安装源也能绕过，比如从本地目录切到 GitHub 地址。）
 **停用/卸载**：在 GUI 插件页关闭该条目，或让 Agent 执行 `plugin_manager` 的
 `remove_bundle`（包名 `dsh-deepseek-offpeak-indicator`）。
 

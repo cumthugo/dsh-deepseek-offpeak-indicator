@@ -55,51 +55,67 @@ zone does not matter.
 
 Requires a working DSH profile (desktop app or `dsh web`).
 
+The recommended way is to **paste a GitHub address into the Plugins page** — no clone and no
+commands:
+
+1. Open the **Plugins** page from the sidebar (the plugin icon in the panel list).
+2. Click **Add plugin**.
+3. Paste this address into the field (it accepts a package name, a GitHub repository address,
+   or a local directory path):
+
+   ```
+   https://github.com/cumthugo/dsh-deepseek-offpeak-indicator
+   ```
+
+   The shorthand `github:cumthugo/dsh-deepseek-offpeak-indicator` works too; add a branch or
+   commit to pin a revision, e.g.
+   `github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`.
+
+4. It is live as soon as it finishes: the result reads `application: applied` and the open
+   page needs no refresh. If it reports `restart-required`, restart Harness.
+
+The installer writes the package into the profile's `dsh.profile.bundles` and dependencies,
+and inserts the loader row declared by this repository's own `cordis.patch.yml` — you never
+edit a config file by hand.
+
+### Installing through the agent (equivalent)
+
+```
+plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
+```
+
+Before installing, the manager runs a `git ls-remote` reachability check against the
+repository (public repos need no credentials).
+
+### Installing from a local directory (when editing the code)
+
 1. Clone the repository:
 
    ```bash
    git clone https://github.com/cumthugo/dsh-deepseek-offpeak-indicator.git
    ```
 
-2. Install the **absolute path** of the clone into your profile. Ask the agent in a DSH
-   session to run:
+2. Paste the **absolute path** of the clone into the same field (or hand it to the agent):
 
    ```
    plugin_manager  action=install_bundle  target=/absolute/path/to/dsh-deepseek-offpeak-indicator
    ```
 
-   The installer writes a `link:` dependency into the profile's `package.json`, adds the
-   package to `dsh.profile.bundles`, and inserts the loader row declared by this
-   repository's own `cordis.patch.yml`.
+   The profile records a `link:` dependency, so re-installing after an edit is enough.
 
-3. `application: applied` means it is live immediately (no page refresh). If it reports
-   `restart-required`, restart Harness.
-
-### Installing straight from GitHub (no clone)
-
-The installer can also pull the repository itself; the profile then records a git
-dependency:
-
-```
-plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
-```
-
-Before installing, the manager runs a `git ls-remote` reachability check against the GitHub
-repository (public repos need no credentials). Pin a revision with
-`github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`. A git install is a snapshot
-copy, so **updates still go through remove → install**; pin a commit sha for reproducibility.
-
-**Update**: re-running the install for the same local path does **not** take effect — the
-dependency is unchanged, so the installer reports `ambiguous-install`. After `git pull`,
-go through remove-then-install:
+**Update**: re-installing the **same source** does **not** take effect — the dependency is
+unchanged, so the installer reports `ambiguous-install`. Uninstall on the Plugins page first,
+then add the same address again:
 
 ```
 plugin_manager  action=remove_bundle  target=dsh-deepseek-offpeak-indicator
-plugin_manager  action=install_bundle target=/absolute/path/to/dsh-deepseek-offpeak-indicator
+plugin_manager  action=install_bundle target=github:cumthugo/dsh-deepseek-offpeak-indicator
 ```
 
-The host re-reads the bundle and pushes it to the open page, so no restart is needed; the
-Plugins page's uninstall → install does the same.
+The host re-reads the bundle and pushes it to the open page, so no restart is needed. (The
+local-directory flavour works the same way — swap the second target for the clone path;
+switching to a different source, e.g. from a local path to the GitHub address, also avoids
+the ambiguity.)
 **Disable / uninstall**: toggle the row on the GUI Plugins page, or use `plugin_manager`'s
 `remove_bundle` with the package name `dsh-deepseek-offpeak-indicator`.
 
