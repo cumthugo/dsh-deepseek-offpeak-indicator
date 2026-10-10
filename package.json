@@ -1,7 +1,6 @@
 {
   "name": "dsh-deepseek-offpeak-indicator",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "DeepSeek Harness plugin: a small dot left of the model name in the composer tool row — yellow for DeepSeek peak hours, green for off-peak (half price). Rendered only when the session's model provider is DeepSeek.",
   "license": "MIT",
@@ -27,6 +26,14 @@
     ".": "./index.js",
     "./client": "./client.js"
   },
+  "files": [
+    "client.js",
+    "index.js",
+    "cordis.patch.yml",
+    "tools/",
+    "README.md",
+    "README.zh.md"
+  ],
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
