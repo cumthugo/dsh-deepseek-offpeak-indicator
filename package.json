@@ -1,6 +1,6 @@
 {
   "name": "dsh-deepseek-offpeak-indicator",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "在输入框工具行左侧显示 DeepSeek API 当前计费时段：黄=高峰时段，绿=空闲时段（半价）",

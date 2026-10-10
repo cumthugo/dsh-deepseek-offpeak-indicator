@@ -2,7 +2,7 @@
 
 **在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）Web GUI 里一眼看出当前 DeepSeek API 的计费时段。**
 
-输入框工具行最左侧常驻一颗 5px 小圆点（**仅当当前会话选中的模型 provider 属于 DeepSeek 时才渲染**）：
+输入框工具行里、**模型名左侧**常驻一颗 5px 小圆点（**仅当当前会话选中的模型 provider 属于 DeepSeek 时才渲染**）：
 
 | 颜色 | 时段 | 价格 |
 | --- | --- | --- |
@@ -147,9 +147,9 @@ node tools/update-holidays.mjs 2027       # 只刷新指定年份
 - `PEAK_COLOR` / `OFFPEAK_COLOR`：两种颜色；
 - `DOT_SIZE`：圆点直径（默认 `5`）；
 - `DEEPSEEK_PROVIDER_IDS` / `isDeepSeekProvider()`：哪些 provider 算 DeepSeek；
-- 槽位名：默认 `conversation.input.left`（输入框工具行左侧）。换成
-  `conversation.input.right`（右侧）、`conversation.composer.dock`（输入框下方通栏）等，
-  只需改 `ctx.slots.register` 里的 `name`，并把 `id` 一并调整。
+- 槽位名与水平位置：默认 `conversation.input.right`（正好渲染在模型名左侧），水平微调由
+  `nudgeX` 控制；想换位置就改 `ctx.slots.register` 里的 `name`（例如
+  `conversation.input.left`、`conversation.composer.dock`），并把 `id` 一并调整。
 
 ## 开发
 
@@ -165,7 +165,7 @@ node --check client.js         # 语法检查
 ## 兼容性
 
 在 **macOS + DSH 桌面版 0.2.0-rc.2** 上开发并验证（`install_bundle` 返回
-`application: applied`，`conversation.input.left` 槽位占用项 `active: true`）。
+`application: applied`，`conversation.input.right` 槽位占用项 `active: true`）。
 插件只用到槽位注册与 React，理论上兼容同代 DSH；DSH 若调整槽位名或 `dsh.client`
 清单约定，需要跟着改。
 

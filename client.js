@@ -19,6 +19,8 @@ window.__ModuleLoader__.load({
     const OFFPEAK_COLOR = '#22c55e';
     const RING = '0 0 0 1px rgba(127,127,127,0.45)';
     const DOT_SIZE = 5;
+    // 圆点外框宽度：圆点居中其中，外框越窄，圆点离右侧的模型名越近。
+    const DOT_BOX_WIDTH = 12;
 
     // ── 显示条件：只有 DeepSeek 自家 provider 才显示 ─────────────────────────
     // 分时计价只适用于 DeepSeek 官方 API，第三方中转即便转发的是 DeepSeek 模型也不适用，
@@ -171,6 +173,9 @@ window.__ModuleLoader__.load({
       if (!isDeepSeekProvider(provider)) return null;
 
       const peak = isPeak(beijingParts(new Date(now)), holidays);
+      // nudgeX：把圆点整体横向微调若干像素。用 transform 只改视觉位置，
+      // 不改变外框占位，因此相邻控件（模型选择器等）不会被推走。
+      const nudgeX = typeof props.nudgeX === 'number' ? props.nudgeX : 0;
       return h(
         'span',
         {
@@ -180,9 +185,10 @@ window.__ModuleLoader__.load({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '22px',
+            width: `${DOT_BOX_WIDTH}px`,
             height: '24px',
             flex: '0 0 auto',
+            ...(nudgeX === 0 ? {} : { transform: `translateX(${nudgeX}px)` }),
           },
         },
         h('span', {
@@ -200,16 +206,18 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'modelDirectories'],
       apply(ctx) {
-        ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
-          name: 'conversation.input.left',
+        // 位置：模型名左侧（conversation.input.right 正好渲染在 conversation.input.model 之前），
+        // 再右移 20px 贴近模型名。想换位置改这里的 name 与 id 即可。
+        ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
+          name: 'conversation.input.right',
           id: 'deepseek-offpeak-indicator',
           order: 0,
           // 每个会话取它自己的模型目录 store（uSES-safe），组件据此判断 provider。
           inject: (sessionId) => {
             try {
-              return { directory: ctx.modelDirectories.directoryFor(sessionId).store };
+              return { directory: ctx.modelDirectories.directoryFor(sessionId).store, nudgeX: 20 };
             } catch (error) {
-              return { directory: null };
+              return { directory: null, nudgeX: 20 };
             }
           },
         }, PeakDot));

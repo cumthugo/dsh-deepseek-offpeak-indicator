@@ -2,7 +2,7 @@
 
 **See the current DeepSeek API pricing window at a glance in the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI.**
 
-A single 5px dot sits at the far left of the composer tool row (**rendered only when the
+A single 5px dot sits in the composer tool row, **just left of the model name** (**rendered only when the
 session's selected model provider is DeepSeek**):
 
 | Color | Window | Price |
@@ -167,10 +167,11 @@ Run the remove → install flow above afterwards, so the page picks up the new b
 
 Everything lives at the top of `client.js`: `PEAK_WINDOWS`, `PEAK_COLOR` /
 `OFFPEAK_COLOR`, `DOT_SIZE` (default `5`), `DEEPSEEK_PROVIDER_IDS` /
-`isDeepSeekProvider()` (which providers count as DeepSeek), and the slot name
-(`conversation.input.left` by default; other candidates are `conversation.input.right` and
-`conversation.composer.dock` — change `name` in `ctx.slots.register` and adjust `id`
-accordingly).
+`isDeepSeekProvider()` (which providers count as DeepSeek), plus the slot and its horizontal
+placement — the dot registers into `conversation.input.right`, which renders immediately left
+of the model name, and `nudgeX` shifts it by a few pixels. To move it elsewhere change `name`
+in `ctx.slots.register` (e.g. `conversation.input.left`, `conversation.composer.dock`) and
+adjust `id` accordingly.
 
 ## Development
 
@@ -187,7 +188,7 @@ bundle must not ship its own copy. Run the remove → install flow above after e
 ## Compatibility
 
 Developed and verified on **macOS with DSH desktop 0.2.0-rc.2** (`install_bundle` returned
-`application: applied`; the `conversation.input.left` occupant reports `active: true`).
+`application: applied`; the `conversation.input.right` occupant reports `active: true`).
 The plugin only uses slot registration and React, so it should work on the same DSH
 generation; a change to slot names or the `dsh.client` manifest contract would require an
 update here.
