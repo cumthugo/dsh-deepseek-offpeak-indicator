@@ -1,0 +1,42 @@
+{
+  "name": "@local/dsh-deepseek-offpeak-indicator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "在输入框工具行左侧显示 DeepSeek API 当前计费时段：黄=高峰时段，绿=空闲时段（半价）",
+  "license": "MIT",
+  "author": "cumthugo",
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "plugin",
+    "pricing",
+    "off-peak"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cumthugo/dsh-offpeak-indicator.git"
+  },
+  "homepage": "https://github.com/cumthugo/dsh-offpeak-indicator#readme",
+  "bugs": {
+    "url": "https://github.com/cumthugo/dsh-offpeak-indicator/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}
