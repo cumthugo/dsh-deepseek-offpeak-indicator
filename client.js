@@ -208,7 +208,7 @@ window.__ModuleLoader__.load({
       inject: ['slots', 'modelDirectories'],
       apply(ctx) {
         // 位置：模型名左侧（conversation.input.right 正好渲染在 conversation.input.model 之前），
-        // 再右移 15px、下移 2px。想换位置改这里的 name 与 id 即可。
+        // 再右移 16px、下移 1px。想换位置改这里的 name 与 id 即可。
         ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
           name: 'conversation.input.right',
           id: 'deepseek-offpeak-indicator',
@@ -216,9 +216,9 @@ window.__ModuleLoader__.load({
           // 每个会话取它自己的模型目录 store（uSES-safe），组件据此判断 provider。
           inject: (sessionId) => {
             try {
-              return { directory: ctx.modelDirectories.directoryFor(sessionId).store, nudgeX: 15, nudgeY: 2 };
+              return { directory: ctx.modelDirectories.directoryFor(sessionId).store, nudgeX: 16, nudgeY: 1 };
             } catch (error) {
-              return { directory: null, nudgeX: 15, nudgeY: 2 };
+              return { directory: null, nudgeX: 16, nudgeY: 1 };
             }
           },
         }, PeakDot));
