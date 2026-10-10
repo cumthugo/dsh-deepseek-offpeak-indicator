@@ -173,9 +173,10 @@ window.__ModuleLoader__.load({
       if (!isDeepSeekProvider(provider)) return null;
 
       const peak = isPeak(beijingParts(new Date(now)), holidays);
-      // nudgeX：把圆点整体横向微调若干像素。用 transform 只改视觉位置，
+      // nudgeX / nudgeY：把圆点整体横向、纵向微调若干像素。用 transform 只改视觉位置，
       // 不改变外框占位，因此相邻控件（模型选择器等）不会被推走。
       const nudgeX = typeof props.nudgeX === 'number' ? props.nudgeX : 0;
+      const nudgeY = typeof props.nudgeY === 'number' ? props.nudgeY : 0;
       return h(
         'span',
         {
@@ -188,7 +189,7 @@ window.__ModuleLoader__.load({
             width: `${DOT_BOX_WIDTH}px`,
             height: '24px',
             flex: '0 0 auto',
-            ...(nudgeX === 0 ? {} : { transform: `translateX(${nudgeX}px)` }),
+            ...(nudgeX === 0 && nudgeY === 0 ? {} : { transform: `translate(${nudgeX}px, ${nudgeY}px)` }),
           },
         },
         h('span', {
@@ -207,7 +208,7 @@ window.__ModuleLoader__.load({
       inject: ['slots', 'modelDirectories'],
       apply(ctx) {
         // 位置：模型名左侧（conversation.input.right 正好渲染在 conversation.input.model 之前），
-        // 再右移 20px 贴近模型名。想换位置改这里的 name 与 id 即可。
+        // 再右移 15px、下移 2px。想换位置改这里的 name 与 id 即可。
         ctx.slots.inject('conversation.input.right', () => ctx.slots.register({
           name: 'conversation.input.right',
           id: 'deepseek-offpeak-indicator',
@@ -215,9 +216,9 @@ window.__ModuleLoader__.load({
           // 每个会话取它自己的模型目录 store（uSES-safe），组件据此判断 provider。
           inject: (sessionId) => {
             try {
-              return { directory: ctx.modelDirectories.directoryFor(sessionId).store, nudgeX: 20 };
+              return { directory: ctx.modelDirectories.directoryFor(sessionId).store, nudgeX: 15, nudgeY: 2 };
             } catch (error) {
-              return { directory: null, nudgeX: 20 };
+              return { directory: null, nudgeX: 15, nudgeY: 2 };
             }
           },
         }, PeakDot));
