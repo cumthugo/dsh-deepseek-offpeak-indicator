@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: '@local/dsh-deepseek-offpeak-indicator',
+  id: 'dsh-deepseek-offpeak-indicator',
   factory(require) {
     const React = require('react');
     const h = React.createElement;

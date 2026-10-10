@@ -3,4 +3,4 @@
 # （在 profile 的 cordis.patch.yml 里对该 id 写 disabled: true 即可）。
 - insert:
     - id: deepseek-offpeak-indicator
-      name: '@local/dsh-deepseek-offpeak-indicator'
+      name: 'dsh-deepseek-offpeak-indicator'

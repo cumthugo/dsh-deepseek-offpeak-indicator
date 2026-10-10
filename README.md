@@ -81,7 +81,7 @@ plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpe
 `ambiguous-install`。`git pull` 之后要走"先移除、再安装"这一趟：
 
 ```
-plugin_manager  action=remove_bundle  target=@local/dsh-deepseek-offpeak-indicator
+plugin_manager  action=remove_bundle  target=dsh-deepseek-offpeak-indicator
 plugin_manager  action=install_bundle target=/绝对路径/dsh-deepseek-offpeak-indicator
 ```
 
@@ -89,11 +89,11 @@ plugin_manager  action=install_bundle target=/绝对路径/dsh-deepseek-offpeak-
 （只想让改动生效而不卸载的话，也可以改一下 `package.json` 的 `version` 让依赖串变化，但不如
 上面这条可靠。）
 **停用/卸载**：在 GUI 插件页关闭该条目，或让 Agent 执行 `plugin_manager` 的
-`remove_bundle`（包名 `@local/dsh-deepseek-offpeak-indicator`）。
+`remove_bundle`（包名 `dsh-deepseek-offpeak-indicator`）。
 
-> 包名保持 `@local/dsh-deepseek-offpeak-indicator`——这是 DSH 对本地 workspace bundle 的
-> 约定作用域（官方插件模板同样用 `@local/`），与仓库名不同不影响使用。它没有发布到 npm，
-> 安装走的就是上面的本地路径方式。
+> 包名与仓库同名（`dsh-deepseek-offpeak-indicator`），没有发布到 npm，按上面的本地路径或
+> GitHub 方式安装即可。包名必须与 `client.js` 里 `window.__ModuleLoader__.load({ id })` 的 `id`、
+> 以及 `cordis.patch.yml` 条目的 `name` 完全一致——改一处就要三处一起改，并重装。
 
 ## 节假日数据与自动更新
 

@@ -94,18 +94,19 @@ dependency is unchanged, so the installer reports `ambiguous-install`. After `gi
 go through remove-then-install:
 
 ```
-plugin_manager  action=remove_bundle  target=@local/dsh-deepseek-offpeak-indicator
+plugin_manager  action=remove_bundle  target=dsh-deepseek-offpeak-indicator
 plugin_manager  action=install_bundle target=/absolute/path/to/dsh-deepseek-offpeak-indicator
 ```
 
 The host re-reads the bundle and pushes it to the open page, so no restart is needed; the
 Plugins page's uninstall → install does the same.
 **Disable / uninstall**: toggle the row on the GUI Plugins page, or use `plugin_manager`'s
-`remove_bundle` with the package name `@local/dsh-deepseek-offpeak-indicator`.
+`remove_bundle` with the package name `dsh-deepseek-offpeak-indicator`.
 
-> The package keeps the `@local/` scope because that is DSH's convention for locally
-> installed workspace bundles (the official plugin template uses it too). It is not
-> published to npm — installation works by local path as shown above.
+> The package name matches the repository (`dsh-deepseek-offpeak-indicator`) and is not
+> published to npm — install it by local path or from GitHub as shown above. The name must
+> match the `id` in `client.js`'s `window.__ModuleLoader__.load({ id })` and the entry `name`
+> in `cordis.patch.yml`: change one and all three must change, followed by a reinstall.
 
 ## Holiday data and automatic refresh
 
