@@ -17,11 +17,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cumthugo/dsh-offpeak-indicator.git"
+    "url": "git+https://github.com/cumthugo/dsh-deepseek-offpeak-indicator.git"
   },
-  "homepage": "https://github.com/cumthugo/dsh-offpeak-indicator#readme",
+  "homepage": "https://github.com/cumthugo/dsh-deepseek-offpeak-indicator#readme",
   "bugs": {
-    "url": "https://github.com/cumthugo/dsh-offpeak-indicator/issues"
+    "url": "https://github.com/cumthugo/dsh-deepseek-offpeak-indicator/issues"
   },
   "exports": {
     ".": "./index.js",

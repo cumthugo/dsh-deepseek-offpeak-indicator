@@ -45,7 +45,7 @@ window.__ModuleLoader__.load({
       (year) => `https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/${year}.json`,
       (year) => `https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/${year}.json`,
     ];
-    const CACHE_KEY = 'dsh-offpeak-indicator:holidays:';
+    const CACHE_KEY = 'dsh-deepseek-offpeak-indicator:holidays:';
     const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
     const FETCH_TIMEOUT_MS = 6000;
     const TICK_MS = 15000;

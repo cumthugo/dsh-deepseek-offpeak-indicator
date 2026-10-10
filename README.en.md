@@ -1,4 +1,4 @@
-# dsh-offpeak-indicator
+# dsh-deepseek-offpeak-indicator
 
 **See the current DeepSeek API pricing window at a glance in the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI.**
 
@@ -58,14 +58,14 @@ Requires a working DSH profile (desktop app or `dsh web`).
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/cumthugo/dsh-offpeak-indicator.git
+   git clone https://github.com/cumthugo/dsh-deepseek-offpeak-indicator.git
    ```
 
 2. Install the **absolute path** of the clone into your profile. Ask the agent in a DSH
    session to run:
 
    ```
-   plugin_manager  action=install_bundle  target=/absolute/path/to/dsh-offpeak-indicator
+   plugin_manager  action=install_bundle  target=/absolute/path/to/dsh-deepseek-offpeak-indicator
    ```
 
    The installer writes a `link:` dependency into the profile's `package.json`, adds the
@@ -81,7 +81,7 @@ go through remove-then-install:
 
 ```
 plugin_manager  action=remove_bundle  target=@local/dsh-deepseek-offpeak-indicator
-plugin_manager  action=install_bundle target=/absolute/path/to/dsh-offpeak-indicator
+plugin_manager  action=install_bundle target=/absolute/path/to/dsh-deepseek-offpeak-indicator
 ```
 
 The host re-reads the bundle and pushes it to the open page, so no restart is needed; the
@@ -98,7 +98,7 @@ Plugins page's uninstall → install does the same.
 Holidays are only used to exclude statutory days off from the peak windows. Three sources,
 in priority order:
 
-1. **Local cache** — `localStorage` key `dsh-offpeak-indicator:holidays:<year>`, considered
+1. **Local cache** — `localStorage` key `dsh-deepseek-offpeak-indicator:holidays:<year>`, considered
    fresh for 30 days;
 2. **Network refresh** — the year JSON from
    [holiday-cn](https://github.com/NateScarlet/holiday-cn) (which scrapes the State Council

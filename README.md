@@ -1,4 +1,4 @@
-# dsh-offpeak-indicator
+# dsh-deepseek-offpeak-indicator
 
 **在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）Web GUI 里一眼看出当前 DeepSeek API 的计费时段。**
 
@@ -49,13 +49,13 @@
 1. 克隆到本地：
 
    ```bash
-   git clone https://github.com/cumthugo/dsh-offpeak-indicator.git
+   git clone https://github.com/cumthugo/dsh-deepseek-offpeak-indicator.git
    ```
 
 2. 把**克隆下来的绝对路径**装进 profile。在 DSH 会话里让 Agent 执行：
 
    ```
-   plugin_manager  action=install_bundle  target=/绝对路径/dsh-offpeak-indicator
+   plugin_manager  action=install_bundle  target=/绝对路径/dsh-deepseek-offpeak-indicator
    ```
 
    或在 GUI 的**插件**页面里选择"从本地目录安装"。安装器会自动：
@@ -70,7 +70,7 @@
 
 ```
 plugin_manager  action=remove_bundle  target=@local/dsh-deepseek-offpeak-indicator
-plugin_manager  action=install_bundle target=/绝对路径/dsh-offpeak-indicator
+plugin_manager  action=install_bundle target=/绝对路径/dsh-deepseek-offpeak-indicator
 ```
 
 宿主会重新读取 bundle 并通知页面热更新，无需重启。GUI 插件页里的"卸载 → 安装"同理。
@@ -87,7 +87,7 @@ plugin_manager  action=install_bundle target=/绝对路径/dsh-offpeak-indicator
 
 节假日只用于"把放假日从高峰里排除"，共三层来源，按优先级取用：
 
-1. **本地缓存**：`localStorage` 的 `dsh-offpeak-indicator:holidays:<年>`，30 天内视为新鲜；
+1. **本地缓存**：`localStorage` 的 `dsh-deepseek-offpeak-indicator:holidays:<年>`，30 天内视为新鲜；
 2. **联网刷新**：[holiday-cn](https://github.com/NateScarlet/holiday-cn)（自动抓取国务院办公厅
    放假安排）的年份 JSON，依次尝试 `raw.githubusercontent.com` 与 `cdn.jsdelivr.net`，6 秒超时；
 3. **内置兜底**：`client.js` 里的 `BUILTIN_HOLIDAYS`（当前含 2026 年，33 个放假日）。
