@@ -65,6 +65,18 @@
 3. 结果是 `application: applied` 就立刻生效（当前页面无需刷新）；若返回
    `restart-required`，重启 Harness 即可。
 
+### 直接从 GitHub 安装（免克隆）
+
+让安装器直接从仓库拉取也可以，profile 里会记成 git 依赖：
+
+```
+plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
+```
+
+安装前安装器会对 GitHub 仓库做一次 `git ls-remote` 连通性检查（公开仓库无需凭据）。
+想锁定版本就写死提交号或分支：`github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`。
+注意 git 安装下来的是一份快照副本，**更新同样要走 remove → install**；要可复现就固定 commit sha。
+
 **更新**：对同一个本地路径**重复安装不会生效**——依赖没变化，安装器会报
 `ambiguous-install`。`git pull` 之后要走"先移除、再安装"这一趟：
 

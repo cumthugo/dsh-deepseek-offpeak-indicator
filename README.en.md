@@ -75,6 +75,20 @@ Requires a working DSH profile (desktop app or `dsh web`).
 3. `application: applied` means it is live immediately (no page refresh). If it reports
    `restart-required`, restart Harness.
 
+### Installing straight from GitHub (no clone)
+
+The installer can also pull the repository itself; the profile then records a git
+dependency:
+
+```
+plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
+```
+
+Before installing, the manager runs a `git ls-remote` reachability check against the GitHub
+repository (public repos need no credentials). Pin a revision with
+`github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`. A git install is a snapshot
+copy, so **updates still go through remove → install**; pin a commit sha for reproducibility.
+
 **Update**: re-running the install for the same local path does **not** take effect — the
 dependency is unchanged, so the installer reports `ambiguous-install`. After `git pull`,
 go through remove-then-install:
