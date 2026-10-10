@@ -1,179 +1,204 @@
 # dsh-deepseek-offpeak-indicator
 
-**在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）Web GUI 里一眼看出当前 DeepSeek API 的计费时段。**
+**See the current DeepSeek API pricing window at a glance in the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI.**
 
-输入框工具行里、**模型名左侧**常驻一颗 5px 小圆点（**仅当当前会话选中的模型 provider 属于 DeepSeek 时才渲染**）：
+A single 5px dot sits in the composer tool row, **just left of the model name** (**rendered only when the
+session's selected model provider is DeepSeek**):
 
-| 颜色 | 时段 | 价格 |
+| Color | Window | Price |
 | --- | --- | --- |
-| 🟡 黄 `#f2b705` | 高峰时段 | 标准价 |
-| 🟢 绿 `#22c55e` | 空闲时段 | 半价 |
+| 🟡 Yellow `#f2b705` | Peak hours | Standard |
+| 🟢 Green `#22c55e` | Off-peak hours | Half price |
 
-除颜色外不显示任何文字、图标或占位文案（圆点带 `aria-label`，屏幕阅读器可读）。
-不需要构建步骤，也不依赖任何第三方库；全部逻辑在一个单文件里。
+Nothing else is rendered — no text, no icon, no placeholder copy (the dot carries an
+`aria-label` for screen readers). No build step, no third-party dependencies: the whole
+plugin is one file.
 
-[English](README.en.md) | 中文
+English | [中文](README.zh.md)
 
-## 显示条件
+## When it shows
 
-只有当前会话选中的模型 provider 属于 DeepSeek 时才渲染；其余情况下彻底不渲染，不占位：
+The dot renders only while the session's selected model provider is DeepSeek; otherwise it
+renders nothing at all and takes no space:
 
-| provider | 显示 |
+| Provider | Shows |
 | --- | --- |
-| `deepseek-official`（DeepSeek 官方 API Key） | ✅ |
-| `deepseek-account`（DeepSeek 账号） | ✅ |
-| 其他（Anthropic、OpenAI 兼容中转、自建网关……） | ❌ 不渲染 |
-| 未知（模型目录尚未加载完） | ❌ 不渲染 |
+| `deepseek-official` (DeepSeek API key) | ✅ |
+| `deepseek-account` (DeepSeek account) | ✅ |
+| Anything else (Anthropic, an OpenAI-compatible gateway, a self-hosted proxy, …) | ❌ hidden |
+| Unknown (model directory still loading) | ❌ hidden |
 
-只看 provider，不看模型名——第三方中转即便转发的是 DeepSeek 模型，也不适用 DeepSeek 的分时计价。
-判定逻辑是 `isDeepSeekProvider()`，想改口径只动这一个函数。
+The provider is what counts, not the model name — a third-party gateway serving a DeepSeek
+model does not get DeepSeek's time-of-day pricing. The rule lives in `isDeepSeekProvider()`;
+change that one function to change the policy.
 
-## 判定规则
+## How the window is decided
 
-依据 DeepSeek 官方定价说明（[模型 & 价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)）：
+Per DeepSeek's official pricing page
+([Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing)):
 
-- **高峰时段**：北京时间**周一至周五**（不含中国法定节假日）**9:00–12:00**、**14:00–18:00**；
-- **空闲时段**：其余全部时间，**包括周末与法定节假日全天**（空闲价 = 高峰价的一半）。
+- **Peak**: Beijing time **Monday–Friday** (excluding Chinese statutory holidays),
+  **09:00–12:00** and **14:00–18:00**;
+- **Off-peak**: everything else, **including weekends and statutory holidays all day**
+  (off-peak = half of the peak price).
 
-边界按左闭右开处理：12:00 与 18:00 整点即进入空闲时段，9:00、14:00 整点即进入高峰时段。
-时间一律按 `Asia/Shanghai` 计算，改本机时区不影响结果。
+Intervals are half-open: 12:00 and 18:00 sharp already count as off-peak, while 09:00 and
+14:00 sharp count as peak. All comparisons use `Asia/Shanghai`, so the machine's own time
+zone does not matter.
 
-> **关于"调休上班的周末"**：官方原文是"周一至周五……其余时段，包括周末及中国法定节假日
-> 全天均为空闲时段"，因此调休上班的周六/周日仍按空闲时段（绿色）处理。若你认为应当算高峰，
-> 改 `client.js` 里的 `WORKDAYS` 判定即可。
+> **Make-up workdays.** The official wording is "Monday to Friday … all other periods,
+> including weekends and Chinese statutory holidays, are off-peak all day". A Saturday or
+> Sunday that the government designates as a make-up workday therefore stays off-peak
+> (green) here. Change the `WORKDAYS` check in `client.js` if you disagree.
 
-## 安装
+## Installation
 
-前置：一个可用的 DSH profile（桌面版或 `dsh web` 均可），并且已能正常启动会话。
+Requires a working DSH profile (desktop app or `dsh web`).
 
-推荐**在插件页里填个 GitHub 地址**就装好，不用克隆、不用敲命令：
+The recommended way is to **paste a GitHub address into the Plugins page** — no clone and no
+commands:
 
-1. 点开侧边栏的**「插件」**页（面板列表里的插件图标）。
-2. 点**「添加插件」**。
-3. 在输入框里填入下面这个地址（它接受包名、GitHub 仓库地址或本地目录路径）：
+1. Open the **Plugins** page from the sidebar (the plugin icon in the panel list).
+2. Click **Add plugin**.
+3. Paste this address into the field (it accepts a package name, a GitHub repository address,
+   or a local directory path):
 
    ```
    https://github.com/cumthugo/dsh-deepseek-offpeak-indicator
    ```
 
-   简写 `github:cumthugo/dsh-deepseek-offpeak-indicator` 同样可以；想锁定版本就带上分支或提交号，
-   例如 `github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`。
+   The shorthand `github:cumthugo/dsh-deepseek-offpeak-indicator` works too; add a branch or
+   commit to pin a revision, e.g.
+   `github:cumthugo/dsh-deepseek-offpeak-indicator#<commit-sha>`.
 
-4. 装完即生效：结果是 `application: applied`，当前页面无需刷新；若提示 `restart-required`，
-   重启 Harness 即可。
+4. It is live as soon as it finishes: the result reads `application: applied` and the open
+   page needs no refresh. If it reports `restart-required`, restart Harness.
 
-安装器会自动把它写进 profile 的 `dsh.profile.bundles` 与依赖，并按仓库自带的
-`cordis.patch.yml` 插入 Loader 条目——你不需要手工改任何配置文件。
+The installer writes the package into the profile's `dsh.profile.bundles` and dependencies,
+and inserts the loader row declared by this repository's own `cordis.patch.yml` — you never
+edit a config file by hand.
 
-### 让 Agent 安装（等价做法）
+### Installing through the agent (equivalent)
 
 ```
 plugin_manager  action=install_bundle  target=github:cumthugo/dsh-deepseek-offpeak-indicator
 ```
 
-安装前安装器会对仓库做一次 `git ls-remote` 连通性检查（公开仓库无需凭据）。
+Before installing, the manager runs a `git ls-remote` reachability check against the
+repository (public repos need no credentials).
 
-### 本地目录安装（要改代码时用）
+### Installing from a local directory (when editing the code)
 
-1. 克隆到本地：
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/cumthugo/dsh-deepseek-offpeak-indicator.git
    ```
 
-2. 把克隆下来的**绝对路径**填进同一个输入框（或交给 Agent）：
+2. Paste the **absolute path** of the clone into the same field (or hand it to the agent):
 
    ```
-   plugin_manager  action=install_bundle  target=/绝对路径/dsh-deepseek-offpeak-indicator
+   plugin_manager  action=install_bundle  target=/absolute/path/to/dsh-deepseek-offpeak-indicator
    ```
 
-   profile 里会记成 `link:` 依赖，改完源文件重装一次即可生效。
+   The profile records a `link:` dependency, so re-installing after an edit is enough.
 
-**更新**：重复安装**同一个安装源不会生效**——依赖串没变化，安装器会报 `ambiguous-install`。
-正确做法是先在插件页卸载，再用同一个地址重装一次：
+**Update**: re-installing the **same source** does **not** take effect — the dependency is
+unchanged, so the installer reports `ambiguous-install`. Uninstall on the Plugins page first,
+then add the same address again:
 
 ```
 plugin_manager  action=remove_bundle  target=dsh-deepseek-offpeak-indicator
 plugin_manager  action=install_bundle target=github:cumthugo/dsh-deepseek-offpeak-indicator
 ```
 
-宿主会重新读取 bundle 并推给已打开的页面，无需重启。（本地目录装法同理，把第二行的 target
-换成克隆路径即可；换一个安装源也能绕过，比如从本地目录切到 GitHub 地址。）
-**停用/卸载**：在 GUI 插件页关闭该条目，或让 Agent 执行 `plugin_manager` 的
-`remove_bundle`（包名 `dsh-deepseek-offpeak-indicator`）。
+The host re-reads the bundle and pushes it to the open page, so no restart is needed. (The
+local-directory flavour works the same way — swap the second target for the clone path;
+switching to a different source, e.g. from a local path to the GitHub address, also avoids
+the ambiguity.)
+**Disable / uninstall**: toggle the row on the GUI Plugins page, or use `plugin_manager`'s
+`remove_bundle` with the package name `dsh-deepseek-offpeak-indicator`.
 
-> 包名与仓库同名（`dsh-deepseek-offpeak-indicator`），没有发布到 npm，按上面的本地路径或
-> GitHub 方式安装即可。包名必须与 `client.js` 里 `window.__ModuleLoader__.load({ id })` 的 `id`、
-> 以及 `cordis.patch.yml` 条目的 `name` 完全一致——改一处就要三处一起改，并重装。
+> The package name matches the repository (`dsh-deepseek-offpeak-indicator`) and is not
+> published to npm — install it by local path or from GitHub as shown above. The name must
+> match the `id` in `client.js`'s `window.__ModuleLoader__.load({ id })` and the entry `name`
+> in `cordis.patch.yml`: change one and all three must change, followed by a reinstall.
 
-## 节假日数据与自动更新
+## Holiday data and automatic refresh
 
-节假日只用于"把放假日从高峰里排除"，共三层来源，按优先级取用：
+Holidays are only used to exclude statutory days off from the peak windows. Three sources,
+in priority order:
 
-1. **本地缓存**：`localStorage` 的 `dsh-deepseek-offpeak-indicator:holidays:<年>`，30 天内视为新鲜；
-2. **联网刷新**：[holiday-cn](https://github.com/NateScarlet/holiday-cn)（自动抓取国务院办公厅
-   放假安排）的年份 JSON，依次尝试 `raw.githubusercontent.com` 与 `cdn.jsdelivr.net`，6 秒超时；
-3. **内置兜底**：`client.js` 里的 `BUILTIN_HOLIDAYS`（当前含 2026 年，33 个放假日）。
+1. **Local cache** — `localStorage` key `dsh-deepseek-offpeak-indicator:holidays:<year>`, considered
+   fresh for 30 days;
+2. **Network refresh** — the year JSON from
+   [holiday-cn](https://github.com/NateScarlet/holiday-cn) (which scrapes the State Council
+   holiday notices), trying `raw.githubusercontent.com` then `cdn.jsdelivr.net`, with a 6 s
+   timeout;
+3. **Built-in fallback** — `BUILTIN_HOLIDAYS` in `client.js` (currently 2026, 33 days off).
 
-因此**次年安排一公布就会自动生效，无需改代码**——前提是机器能访问上述两个地址之一。
-完全离线时回落到内置表；若某年既无缓存也无内置数据，则退化为"只按周末判断"（该年节假日的
-9:00–12:00 / 14:00–18:00 会被误判为高峰）。
+So **next year's schedule takes effect automatically once published**, with no code change,
+provided the machine can reach one of those two hosts. Fully offline, the built-in table is
+used; for a year with neither cache nor built-in data the plugin degrades to a
+weekend-only rule (that year's holidays would be misread as peak during 09:00–12:00 and
+14:00–18:00).
 
-想离线更新内置表：
+To refresh the built-in table offline:
 
 ```bash
-node tools/update-holidays.mjs            # 刷新已有年份 + 今年和明年
-node tools/update-holidays.mjs 2027       # 只刷新指定年份
+node tools/update-holidays.mjs            # existing years + this year and the next
+node tools/update-holidays.mjs 2027       # only the given years
 ```
 
-改完按上面的"更新"流程走一趟（remove → install），页面才会用上新的内置表。
+Run the remove → install flow above afterwards, so the page picks up the new built-in table.
 
-## 文件结构
+## Layout
 
-| 文件 | 作用 |
+| File | Purpose |
 | --- | --- |
-| `package.json` | bundle 清单：`dsh.bundle.patch` 指向补丁，`dsh.client` 声明浏览器半边 |
-| `cordis.patch.yml` | 向 profile 插入一行 `deepseek-offpeak-indicator` 条目 |
-| `index.js` | Host 半边，空 `apply()`（仅为让 Loader 有对应条目） |
-| `client.js` | 浏览器半边：时段判定 + 圆点组件 + 槽位注册（单文件、无构建） |
-| `tools/update-holidays.mjs` | 重新生成内置节假日表 |
-| `tools/test-classify.mjs` | 时段判定逻辑的回归测试（16 个用例） |
+| `package.json` | Bundle manifest: `dsh.bundle.patch` and the `dsh.client` declaration |
+| `cordis.patch.yml` | Inserts the `deepseek-offpeak-indicator` loader row |
+| `index.js` | Host half, empty `apply()` (it exists so the loader has a host row) |
+| `client.js` | Browser half: window logic, the dot component, slot registration (one file, no build) |
+| `tools/update-holidays.mjs` | Regenerates the built-in holiday table |
+| `tools/test-classify.mjs` | Regression tests for the window logic (16 cases) |
 
-## 自定义
+## Customizing
 
-都在 `client.js` 顶部：
+Everything lives at the top of `client.js`: `PEAK_WINDOWS`, `PEAK_COLOR` /
+`OFFPEAK_COLOR`, `DOT_SIZE` (default `5`), `DEEPSEEK_PROVIDER_IDS` /
+`isDeepSeekProvider()` (which providers count as DeepSeek), plus the slot and its placement —
+the dot registers into `conversation.input.right`, which renders immediately left of the model
+name, and `nudgeX` / `nudgeY` shift it by a few pixels (currently `16` / `1`). To move it
+elsewhere change `name` in `ctx.slots.register` (e.g. `conversation.input.left`,
+`conversation.composer.dock`) and adjust `id` accordingly.
 
-- `PEAK_WINDOWS`：高峰区间（当日分钟数）；
-- `PEAK_COLOR` / `OFFPEAK_COLOR`：两种颜色；
-- `DOT_SIZE`：圆点直径（默认 `5`）；
-- `DEEPSEEK_PROVIDER_IDS` / `isDeepSeekProvider()`：哪些 provider 算 DeepSeek；
-- 槽位名与水平位置：默认 `conversation.input.right`（正好渲染在模型名左侧），水平微调由
-  `nudgeX` 控制；想换位置就改 `ctx.slots.register` 里的 `name`（例如
-  `conversation.input.left`、`conversation.composer.dock`），并把 `id` 一并调整。
-
-## 开发
+## Development
 
 ```bash
-node tools/test-classify.mjs   # 时段判定回归测试，应输出"全部通过"
-node --check client.js         # 语法检查
+node tools/test-classify.mjs   # window-logic regression tests ("全部通过" = all passed)
+node --check client.js         # syntax check
 ```
 
-`client.js` 是浏览器半边的完整产物：它用 `window.__ModuleLoader__.load({ id, factory })`
-注册一个惰性工厂，`id` 必须等于 `package.json` 的包名。React 由宿主的模块表提供
-（`require('react')`），因此不需要也不应自带 React。改动后按上面的"更新"流程走一趟生效。
+`client.js` is the complete browser artifact: it calls
+`window.__ModuleLoader__.load({ id, factory })`, where `id` must equal the package name in
+`package.json`. React comes from the host module table via `require('react')`, so the
+bundle must not ship its own copy. Run the remove → install flow above after editing.
 
-## 兼容性
+## Compatibility
 
-在 **macOS + DSH 桌面版 0.2.0-rc.2** 上开发并验证（`install_bundle` 返回
-`application: applied`，`conversation.input.right` 槽位占用项 `active: true`）。
-插件只用到槽位注册与 React，理论上兼容同代 DSH；DSH 若调整槽位名或 `dsh.client`
-清单约定，需要跟着改。
+Developed and verified on **macOS with DSH desktop 0.2.0-rc.2** (`install_bundle` returned
+`application: applied`; the `conversation.input.right` occupant reports `active: true`).
+The plugin only uses slot registration and React, so it should work on the same DSH
+generation; a change to slot names or the `dsh.client` manifest contract would require an
+update here.
 
-## 免责声明
+## Disclaimer
 
-这是非官方插件，与 DeepSeek 无隶属关系。计费时段与价格以
-[官方定价页](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)为准；若规则调整，
-本项目需要相应更新。节假日数据来自第三方汇总，可能存在延迟或误差。
+Unofficial plugin, not affiliated with DeepSeek. Windows and prices follow the
+[official pricing page](https://api-docs.deepseek.com/quick_start/pricing); if the rules
+change, this project needs to follow. Holiday data comes from a third-party aggregation and
+may lag or differ.
 
 ## License
 
