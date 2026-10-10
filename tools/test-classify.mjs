@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8');
 const patched = source.replace(
-  "    return {\n      inject: ['slots'],",
-  "    return {\n      __test: { beijingParts, isPeak, holidaysFor, BUILTIN_HOLIDAYS },\n      inject: ['slots'],",
+  "    return {\n      inject: ['slots', 'modelDirectories'],",
+  "    return {\n      __test: { beijingParts, isPeak, holidaysFor, isDeepSeekProvider, BUILTIN_HOLIDAYS },\n      inject: ['slots', 'modelDirectories'],",
 );
 if (patched === source) throw new Error('未能注入 __test 出口（源码结构变了？）');
 
@@ -28,7 +28,7 @@ const requireStub = (id) => {
 new Function('window', patched)(globalThis.window);
 if (!captured) throw new Error('window.__ModuleLoader__.load 未被调用');
 const { __test } = captured.factory(requireStub);
-const { beijingParts, isPeak, holidaysFor } = __test;
+const { beijingParts, isPeak, holidaysFor, isDeepSeekProvider } = __test;
 
 const holidays2026 = holidaysFor(2026);
 const cases = [
@@ -61,4 +61,28 @@ for (const [label, iso, expected] of cases) {
   console.log(`${ok ? '✓' : '✗'} ${label} → ${actual ? '高峰(黄)' : '空闲(绿)'}${ok ? '' : ` 期望 ${expected ? '高峰' : '空闲'}`}`);
 }
 console.log(failed === 0 ? '\n全部通过' : `\n${failed} 项不符`);
-process.exit(failed === 0 ? 0 : 1);
+
+// ── 显示条件：只有 DeepSeek 自家 provider 才显示 ──────────────────────────────
+const providerCases = [
+  ['DeepSeek 官方 API Key', 'deepseek-official', true],
+  ['DeepSeek 账号', 'deepseek-account', true],
+  ['将来新增的官方 provider（前缀兜底）', 'deepseek-something-new', true],
+  ['大小写混写', 'DeepSeek-Official', true],
+  ['Anthropic', 'anthropic', false],
+  ['OpenAI 兼容中转', 'openrouter', false],
+  ['自定义第三方', 'my-gateway', false],
+  ['未知（目录未加载）', null, false],
+  ['未知（空串）', '', false],
+  ['未知（非字符串）', undefined, false],
+];
+let providerFailed = 0;
+for (const [label, provider, expected] of providerCases) {
+  const actual = isDeepSeekProvider(provider);
+  const ok = actual === expected;
+  if (!ok) providerFailed += 1;
+  console.log(`${ok ? '✓' : '✗'} provider=${String(provider)} (${label}) → ${actual ? '显示' : '隐藏'}${ok ? '' : ` 期望 ${expected ? '显示' : '隐藏'}`}`);
+}
+
+const failures = failed + providerFailed;
+console.log(failures === 0 ? '\n全部通过' : `\n${failures} 项不符`);
+process.exit(failures === 0 ? 0 : 1);

@@ -2,7 +2,8 @@
 
 **See the current DeepSeek API pricing window at a glance in the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web GUI.**
 
-A single 9px dot sits at the far left of the composer tool row:
+A single 5px dot sits at the far left of the composer tool row (**rendered only when the
+session's selected model provider is DeepSeek**):
 
 | Color | Window | Price |
 | --- | --- | --- |
@@ -14,6 +15,22 @@ Nothing else is rendered — no text, no icon, no placeholder copy (the dot carr
 plugin is one file.
 
 English | [中文](README.md)
+
+## When it shows
+
+The dot renders only while the session's selected model provider is DeepSeek; otherwise it
+renders nothing at all and takes no space:
+
+| Provider | Shows |
+| --- | --- |
+| `deepseek-official` (DeepSeek API key) | ✅ |
+| `deepseek-account` (DeepSeek account) | ✅ |
+| Anything else (Anthropic, an OpenAI-compatible gateway, a self-hosted proxy, …) | ❌ hidden |
+| Unknown (model directory still loading) | ❌ hidden |
+
+The provider is what counts, not the model name — a third-party gateway serving a DeepSeek
+model does not get DeepSeek's time-of-day pricing. The rule lives in `isDeepSeekProvider()`;
+change that one function to change the policy.
 
 ## How the window is decided
 
@@ -58,7 +75,17 @@ Requires a working DSH profile (desktop app or `dsh web`).
 3. `application: applied` means it is live immediately (no page refresh). If it reports
    `restart-required`, restart Harness.
 
-**Update**: `git pull`, then run the install command again.
+**Update**: re-running the install for the same local path does **not** take effect — the
+dependency is unchanged, so the installer reports `ambiguous-install`. After `git pull`,
+go through remove-then-install:
+
+```
+plugin_manager  action=remove_bundle  target=@local/dsh-deepseek-offpeak-indicator
+plugin_manager  action=install_bundle target=/absolute/path/to/dsh-offpeak-indicator
+```
+
+The host re-reads the bundle and pushes it to the open page, so no restart is needed; the
+Plugins page's uninstall → install does the same.
 **Disable / uninstall**: toggle the row on the GUI Plugins page, or use `plugin_manager`'s
 `remove_bundle` with the package name `@local/dsh-deepseek-offpeak-indicator`.
 
@@ -92,7 +119,7 @@ node tools/update-holidays.mjs            # existing years + this year and the n
 node tools/update-holidays.mjs 2027       # only the given years
 ```
 
-Reinstall the bundle afterwards — installation is a snapshot.
+Run the remove → install flow above afterwards, so the page picks up the new built-in table.
 
 ## Layout
 
@@ -108,9 +135,11 @@ Reinstall the bundle afterwards — installation is a snapshot.
 ## Customizing
 
 Everything lives at the top of `client.js`: `PEAK_WINDOWS`, `PEAK_COLOR` /
-`OFFPEAK_COLOR`, and the slot name (`conversation.input.left` by default; other candidates
-are `conversation.input.right` and `conversation.composer.dock` — change `name` in
-`ctx.slots.register` and adjust `id` accordingly).
+`OFFPEAK_COLOR`, `DOT_SIZE` (default `5`), `DEEPSEEK_PROVIDER_IDS` /
+`isDeepSeekProvider()` (which providers count as DeepSeek), and the slot name
+(`conversation.input.left` by default; other candidates are `conversation.input.right` and
+`conversation.composer.dock` — change `name` in `ctx.slots.register` and adjust `id`
+accordingly).
 
 ## Development
 
@@ -122,7 +151,7 @@ node --check client.js         # syntax check
 `client.js` is the complete browser artifact: it calls
 `window.__ModuleLoader__.load({ id, factory })`, where `id` must equal the package name in
 `package.json`. React comes from the host module table via `require('react')`, so the
-bundle must not ship its own copy. Reinstall the bundle after editing.
+bundle must not ship its own copy. Run the remove → install flow above after editing.
 
 ## Compatibility
 

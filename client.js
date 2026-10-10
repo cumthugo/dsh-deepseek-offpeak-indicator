@@ -18,6 +18,18 @@ window.__ModuleLoader__.load({
     const PEAK_COLOR = '#f2b705';
     const OFFPEAK_COLOR = '#22c55e';
     const RING = '0 0 0 1px rgba(127,127,127,0.45)';
+    const DOT_SIZE = 5;
+
+    // ── 显示条件：只有 DeepSeek 自家 provider 才显示 ─────────────────────────
+    // 分时计价只适用于 DeepSeek 官方 API，第三方中转即便转发的是 DeepSeek 模型也不适用，
+    // 因此只看 provider，不看模型名。deepseek-official = API Key，deepseek-account =
+    // DeepSeek 账号；前缀兜底覆盖将来新增的官方 provider。
+    const DEEPSEEK_PROVIDER_IDS = ['deepseek-official', 'deepseek-account'];
+
+    function isDeepSeekProvider(provider) {
+      if (typeof provider !== 'string' || provider === '') return false;
+      return DEEPSEEK_PROVIDER_IDS.includes(provider) || provider.toLowerCase().startsWith('deepseek');
+    }
 
     // ── 中国法定节假日（放假日）─────────────────────────────────────────────
     // 数据源：国务院办公厅放假安排通知，经 holiday-cn 汇总为机器可读 JSON。
@@ -116,11 +128,19 @@ window.__ModuleLoader__.load({
       return PEAK_WINDOWS.some(([start, end]) => parts.minutes >= start && parts.minutes < end);
     }
 
+    /** 拿不到模型目录时的替身，保证 Hook 调用顺序稳定。 */
+    const EMPTY_STORE = { subscribe: () => () => {}, getSnapshot: () => null };
+
     /**
-     * 工具行左侧的那颗小圆点。自身持有 15 秒心跳与按年的节假日刷新，
-     * 卸载时随 effect 清理；不读取任何其他插件的状态。
+     * 工具行左侧的那颗小圆点。只在当前会话选中的 provider 属于 DeepSeek 时渲染；
+     * 自身持有 15 秒心跳与按年的节假日刷新，卸载时随 effect 清理。
      */
-    function PeakDot() {
+    function PeakDot(props) {
+      const store = props.directory ?? EMPTY_STORE;
+      const selection = React.useSyncExternalStore(
+        (notify) => store.subscribe(notify),
+        () => store.getSnapshot(),
+      );
       const [now, setNow] = React.useState(() => Date.now());
       const [year, setYear] = React.useState(() => beijingParts(new Date()).year);
       const [holidays, setHolidays] = React.useState(() => holidaysFor(beijingParts(new Date()).year));
@@ -147,6 +167,9 @@ window.__ModuleLoader__.load({
         return () => { alive = false; };
       }, [year]);
 
+      const provider = selection && selection.current ? selection.current.provider : null;
+      if (!isDeepSeekProvider(provider)) return null;
+
       const peak = isPeak(beijingParts(new Date(now)), holidays);
       return h(
         'span',
@@ -164,8 +187,8 @@ window.__ModuleLoader__.load({
         },
         h('span', {
           style: {
-            width: '9px',
-            height: '9px',
+            width: `${DOT_SIZE}px`,
+            height: `${DOT_SIZE}px`,
             borderRadius: '999px',
             background: peak ? PEAK_COLOR : OFFPEAK_COLOR,
             boxShadow: RING,
@@ -175,12 +198,20 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots'],
+      inject: ['slots', 'modelDirectories'],
       apply(ctx) {
         ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
           name: 'conversation.input.left',
           id: 'deepseek-offpeak-indicator',
           order: 0,
+          // 每个会话取它自己的模型目录 store（uSES-safe），组件据此判断 provider。
+          inject: (sessionId) => {
+            try {
+              return { directory: ctx.modelDirectories.directoryFor(sessionId).store };
+            } catch (error) {
+              return { directory: null };
+            }
+          },
         }, PeakDot));
       },
     };

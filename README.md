@@ -2,7 +2,7 @@
 
 **在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）Web GUI 里一眼看出当前 DeepSeek API 的计费时段。**
 
-输入框工具行最左侧常驻一颗 9px 小圆点：
+输入框工具行最左侧常驻一颗 5px 小圆点（**仅当当前会话选中的模型 provider 属于 DeepSeek 时才渲染**）：
 
 | 颜色 | 时段 | 价格 |
 | --- | --- | --- |
@@ -13,6 +13,20 @@
 不需要构建步骤，也不依赖任何第三方库；全部逻辑在一个单文件里。
 
 [English](README.en.md) | 中文
+
+## 显示条件
+
+只有当前会话选中的模型 provider 属于 DeepSeek 时才渲染；其余情况下彻底不渲染，不占位：
+
+| provider | 显示 |
+| --- | --- |
+| `deepseek-official`（DeepSeek 官方 API Key） | ✅ |
+| `deepseek-account`（DeepSeek 账号） | ✅ |
+| 其他（Anthropic、OpenAI 兼容中转、自建网关……） | ❌ 不渲染 |
+| 未知（模型目录尚未加载完） | ❌ 不渲染 |
+
+只看 provider，不看模型名——第三方中转即便转发的是 DeepSeek 模型，也不适用 DeepSeek 的分时计价。
+判定逻辑是 `isDeepSeekProvider()`，想改口径只动这一个函数。
 
 ## 判定规则
 
@@ -51,7 +65,17 @@
 3. 结果是 `application: applied` 就立刻生效（当前页面无需刷新）；若返回
    `restart-required`，重启 Harness 即可。
 
-**更新**：`git pull` 后重跑一次上面的安装命令。
+**更新**：对同一个本地路径**重复安装不会生效**——依赖没变化，安装器会报
+`ambiguous-install`。`git pull` 之后要走"先移除、再安装"这一趟：
+
+```
+plugin_manager  action=remove_bundle  target=@local/dsh-deepseek-offpeak-indicator
+plugin_manager  action=install_bundle target=/绝对路径/dsh-offpeak-indicator
+```
+
+宿主会重新读取 bundle 并通知页面热更新，无需重启。GUI 插件页里的"卸载 → 安装"同理。
+（只想让改动生效而不卸载的话，也可以改一下 `package.json` 的 `version` 让依赖串变化，但不如
+上面这条可靠。）
 **停用/卸载**：在 GUI 插件页关闭该条目，或让 Agent 执行 `plugin_manager` 的
 `remove_bundle`（包名 `@local/dsh-deepseek-offpeak-indicator`）。
 
@@ -79,7 +103,7 @@ node tools/update-holidays.mjs            # 刷新已有年份 + 今年和明年
 node tools/update-holidays.mjs 2027       # 只刷新指定年份
 ```
 
-改完记得重新安装一次 bundle（安装的是快照）。
+改完按上面的"更新"流程走一趟（remove → install），页面才会用上新的内置表。
 
 ## 文件结构
 
@@ -98,6 +122,8 @@ node tools/update-holidays.mjs 2027       # 只刷新指定年份
 
 - `PEAK_WINDOWS`：高峰区间（当日分钟数）；
 - `PEAK_COLOR` / `OFFPEAK_COLOR`：两种颜色；
+- `DOT_SIZE`：圆点直径（默认 `5`）；
+- `DEEPSEEK_PROVIDER_IDS` / `isDeepSeekProvider()`：哪些 provider 算 DeepSeek；
 - 槽位名：默认 `conversation.input.left`（输入框工具行左侧）。换成
   `conversation.input.right`（右侧）、`conversation.composer.dock`（输入框下方通栏）等，
   只需改 `ctx.slots.register` 里的 `name`，并把 `id` 一并调整。
@@ -111,7 +137,7 @@ node --check client.js         # 语法检查
 
 `client.js` 是浏览器半边的完整产物：它用 `window.__ModuleLoader__.load({ id, factory })`
 注册一个惰性工厂，`id` 必须等于 `package.json` 的包名。React 由宿主的模块表提供
-（`require('react')`），因此不需要也不应自带 React。改动后重新安装 bundle 生效。
+（`require('react')`），因此不需要也不应自带 React。改动后按上面的"更新"流程走一趟生效。
 
 ## 兼容性
 
