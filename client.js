@@ -132,17 +132,65 @@ window.__ModuleLoader__.load({
 
     /** 拿不到模型目录时的替身，保证 Hook 调用顺序稳定。 */
     const EMPTY_STORE = { subscribe: () => () => {}, getSnapshot: () => null };
+    /** 解析模型目录的重试节奏与上限（约 15 秒）。 */
+    const RESOLVE_RETRY_MS = 500;
+    const RESOLVE_MAX_ATTEMPTS = 30;
 
     /**
-     * 工具行左侧的那颗小圆点。只在当前会话选中的 provider 属于 DeepSeek 时渲染；
+     * 反复尝试解析当前会话的模型目录，直到成功或达到上限；返回取消函数。
+     *
+     * `directoryFor()` 对"还没注册 scope/binding 的会话"会直接抛错（注释原文
+     * "Unknown sessions fail loud"），而**切换会话的瞬间正是这种状态**：注册时只解析一次
+     * 会让整个新会话都渲染成 null，表现为"一切换会话圆点就消失"。所以解析必须延后并重试。
+     *
+     * @param resolve - 可能抛错的解析函数，成功时返回模型目录。
+     * @param onStore - 解析成功时的回调，收到模型目录。
+     * @param options - 可注入的重试节奏（便于测试）。
+     * @returns 取消重试的清理函数。
+     */
+    function resolveWithRetry(resolve, onStore, options) {
+      const retryMs = options && options.retryMs !== undefined ? options.retryMs : RESOLVE_RETRY_MS;
+      const maxAttempts = options && options.maxAttempts !== undefined ? options.maxAttempts : RESOLVE_MAX_ATTEMPTS;
+      const schedule = options && options.schedule ? options.schedule : (fn, ms) => setTimeout(fn, ms);
+      const cancel = options && options.cancel ? options.cancel : (handle) => clearTimeout(handle);
+      let alive = true;
+      let handle = null;
+      let attempts = 0;
+      const attempt = () => {
+        if (!alive) return;
+        let directory;
+        try {
+          directory = resolve();
+        } catch (error) {
+          attempts += 1;
+          if (attempts < maxAttempts) handle = schedule(attempt, retryMs);
+          return;
+        }
+        onStore(directory);
+      };
+      attempt();
+      return () => {
+        alive = false;
+        if (handle !== null) cancel(handle);
+      };
+    }
+
+    /**
+     * 模型名左侧的那颗小圆点。只在当前会话选中的 provider 属于 DeepSeek 时渲染；
      * 自身持有 15 秒心跳与按年的节假日刷新，卸载时随 effect 清理。
      */
     function PeakDot(props) {
-      const store = props.directory ?? EMPTY_STORE;
-      const selection = React.useSyncExternalStore(
-        (notify) => store.subscribe(notify),
-        () => store.getSnapshot(),
+      const [store, setStore] = React.useState(null);
+
+      React.useEffect(
+        () => resolveWithRetry(props.resolve, (directory) => setStore(directory.store)),
+        [props.sessionId],
       );
+
+      const active = store ?? EMPTY_STORE;
+      const subscribe = React.useCallback((notify) => active.subscribe(notify), [active]);
+      const getSnapshot = React.useCallback(() => active.getSnapshot(), [active]);
+      const selection = React.useSyncExternalStore(subscribe, getSnapshot);
       const [now, setNow] = React.useState(() => Date.now());
       const [year, setYear] = React.useState(() => beijingParts(new Date()).year);
       const [holidays, setHolidays] = React.useState(() => holidaysFor(beijingParts(new Date()).year));
@@ -213,14 +261,13 @@ window.__ModuleLoader__.load({
           name: 'conversation.input.right',
           id: 'deepseek-offpeak-indicator',
           order: 0,
-          // 每个会话取它自己的模型目录 store（uSES-safe），组件据此判断 provider。
-          inject: (sessionId) => {
-            try {
-              return { directory: ctx.modelDirectories.directoryFor(sessionId).store, nudgeX: 16, nudgeY: 1 };
-            } catch (error) {
-              return { directory: null, nudgeX: 16, nudgeY: 1 };
-            }
-          },
+          // 只传一个"解析器"，真正的 directoryFor() 由组件在挂载后调用并重试：
+          // 注册时点会话的 scope/binding 往往还没就绪，提前解析会抛错。
+          inject: (sessionId) => ({
+            resolve: () => ctx.modelDirectories.directoryFor(sessionId),
+            nudgeX: 16,
+            nudgeY: 1,
+          }),
         }, PeakDot));
       },
     };

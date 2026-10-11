@@ -1,6 +1,6 @@
 {
   "name": "dsh-deepseek-offpeak-indicator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "DeepSeek Harness plugin: a small dot left of the model name in the composer tool row — yellow for DeepSeek peak hours, green for off-peak (half price). Rendered only when the session's model provider is DeepSeek.",
   "license": "MIT",

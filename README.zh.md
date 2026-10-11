@@ -28,6 +28,9 @@
 只看 provider，不看模型名——第三方中转即便转发的是 DeepSeek 模型，也不适用 DeepSeek 的分时计价。
 判定逻辑是 `isDeepSeekProvider()`，想改口径只动这一个函数。
 
+模型目录是在**挂载之后延迟解析、失败重试**的：刚切换过去的会话还没注册 scope，这一次查找
+本来就会失败。因此圆点会在切换会话后的零点几秒内出现，而不是整段会话都不显示。
+
 ## 判定规则
 
 依据 DeepSeek 官方定价说明（[模型 & 价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)）：
@@ -137,7 +140,7 @@ node tools/update-holidays.mjs 2027       # 只刷新指定年份
 | `index.js` | Host 半边，空 `apply()`（仅为让 Loader 有对应条目） |
 | `client.js` | 浏览器半边：时段判定 + 圆点组件 + 槽位注册（单文件、无构建） |
 | `tools/update-holidays.mjs` | 重新生成内置节假日表 |
-| `tools/test-classify.mjs` | 时段判定逻辑的回归测试（16 个用例） |
+| `tools/test-classify.mjs` | 回归测试：时段判定、provider 判定，以及切换会话时的解析重试（31 项断言） |
 
 ## 自定义
 

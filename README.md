@@ -32,6 +32,11 @@ The provider is what counts, not the model name — a third-party gateway servin
 model does not get DeepSeek's time-of-day pricing. The rule lives in `isDeepSeekProvider()`;
 change that one function to change the policy.
 
+The session's model directory is resolved **after mount, with retries**: a freshly switched
+session has not registered its scope yet, so the lookup legitimately fails for a moment. The
+dot therefore appears a fraction of a second after a session switch instead of staying hidden
+for the whole session.
+
 ## How the window is decided
 
 Per DeepSeek's official pricing page
@@ -161,7 +166,7 @@ Run the remove → install flow above afterwards, so the page picks up the new b
 | `index.js` | Host half, empty `apply()` (it exists so the loader has a host row) |
 | `client.js` | Browser half: window logic, the dot component, slot registration (one file, no build) |
 | `tools/update-holidays.mjs` | Regenerates the built-in holiday table |
-| `tools/test-classify.mjs` | Regression tests for the window logic (16 cases) |
+| `tools/test-classify.mjs` | Regression tests: peak windows, the provider gate, and the session-switch resolve/retry path (31 assertions) |
 
 ## Customizing
 
